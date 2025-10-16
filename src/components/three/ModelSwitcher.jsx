@@ -1,5 +1,5 @@
 import { PresentationControls } from "@react-three/drei";
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import MacbookModel16 from "../models/Macbook-16";
 import { useGSAP } from "@gsap/react";
 import gsap from "gsap";
@@ -21,8 +21,19 @@ const fadeMeshes = (group, opacity) => {
 
 const moveGroup = (group, x) => {
   if (!group) return;
-
   gsap.to(group.position, { x, duration: ANIMATION_DURATION });
+};
+
+const setInitialState = (group, x, opacity) => {
+  if (!group) return;
+
+  group.position.x = x;
+  group.traverse((child) => {
+    if (child.isMesh) {
+      child.material.transparent = true;
+      child.material.opacity = opacity;
+    }
+  });
 };
 
 const ModelSwitcher = ({ scale, isMobile }) => {
@@ -31,11 +42,26 @@ const ModelSwitcher = ({ scale, isMobile }) => {
 
   const smallMacbookRef = useRef();
   const largeMacbookRef = useRef();
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const showLargeMacbook =
     scale === SCALE_LARGE_DESKTOP || scale === SCALE_LARGE_MOBILE;
 
+  useEffect(() => {
+    if (!isInitialized && smallMacbookRef.current && largeMacbookRef.current) {
+      if (showLargeMacbook) {
+        setInitialState(smallMacbookRef.current, -OFFSET_DISTANCE, 0);
+        setInitialState(largeMacbookRef.current, 0, 1);
+      } else {
+        setInitialState(smallMacbookRef.current, 0, 1);
+        setInitialState(largeMacbookRef.current, OFFSET_DISTANCE, 0);
+      }
+      setIsInitialized(true);
+    }
+  }, [showLargeMacbook, isInitialized]);
+
   useGSAP(() => {
+    if (!isInitialized) return;
     if (showLargeMacbook) {
       moveGroup(smallMacbookRef.current, -OFFSET_DISTANCE);
       moveGroup(largeMacbookRef.current, 0);
@@ -49,7 +75,7 @@ const ModelSwitcher = ({ scale, isMobile }) => {
       fadeMeshes(smallMacbookRef.current, 1);
       fadeMeshes(largeMacbookRef.current, 0);
     }
-  }, [scale]);
+  }, [scale, isInitialized]);
 
   const controlsConfig = {
     snap: true,
