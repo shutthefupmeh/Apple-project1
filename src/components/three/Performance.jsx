@@ -23,7 +23,8 @@ const Performance = () => {
         {
           opacity: 1,
           y: 0,
-          ease: "power1.out",
+          duration: 0.8,
+          ease: "power2.out",
           scrollTrigger: {
             trigger: ".content p",
             start: "top bottom",
@@ -40,28 +41,27 @@ const Performance = () => {
       const tl = gsap.timeline({
         defaults: { duration: 2, ease: "power1.inOut", overwrite: "auto" },
         scrollTrigger: {
-          trigger: sectionEl,
+          trigger: sectionRef.current,
           start: "top bottom",
-          end: "bottom top",
+          end: "center center",
           scrub: 1,
           invalidateOnRefresh: true,
         },
       });
 
       // Position Each Performance Image
-      performanceImgPositions.forEach((item) => {
-        if (item.id === "p5") return;
+      performanceImgPositions.forEach((pos) => {
+        if (pos.id === "p5") return;
+        // gsap.set(`.${pos.id}`, { y: 100, autoAlpha: 0 });
 
-        const selector = `.${item.id}`;
-        const vars = {};
+        const toVars = {};
+        // y: 0, autoAlpha: 1
+        if (pos.left !== undefined) toVars.left = `${pos.left}%`;
+        if (pos.right !== undefined) toVars.right = `${pos.right}%`;
+        if (pos.bottom !== undefined) toVars.bottom = `${pos.bottom}%`;
+        if (pos.transform !== undefined) toVars.transform = pos.transform;
 
-        if (typeof item.left === "number") vars.left = `${item.left}%`;
-        if (typeof item.right === "number") vars.right = `${item.right}%`;
-        if (typeof item.bottom === "number") vars.bottom = `${item.bottom}%`;
-
-        if (item.transform) vars.transform = item.transform;
-
-        tl.to(selector, vars, 0);
+        tl.to(`.${pos.id}`, toVars, 0);
       });
     },
     { scope: sectionRef, dependencies: [isMobile] }
